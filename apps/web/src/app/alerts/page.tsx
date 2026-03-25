@@ -192,14 +192,16 @@ export default function AlertsPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => dismissAlert(alert.id)}
+                        disabled={dismissing[alert.id]}
                       >
-                        Dismiss
+                        {dismissing[alert.id] ? 'Dismissing...' : 'Dismiss'}
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => createDraft(alert.id)}
+                        disabled={creatingDraft[alert.id]}
                       >
-                        Create Post
+                        {creatingDraft[alert.id] ? 'Creating...' : 'Create Post'}
                       </Button>
                     </>
                   )}
