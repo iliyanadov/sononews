@@ -191,6 +191,9 @@ export default function AlertsPage() {
             </label>
           </div>
           <div className="flex items-center space-x-2">
+            <Button asChild variant="ghost" size="sm">
+              <a href="/settings">⚙️ Settings</a>
+            </Button>
             <Badge variant="secondary">{alerts.length} alerts</Badge>
             <span className="text-xs text-muted-foreground">
               Last refresh: {lastRefresh.toLocaleTimeString()}

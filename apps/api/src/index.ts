@@ -7,6 +7,7 @@ import alertsRouter from './routes/alerts';
 import draftsRouter from './routes/drafts';
 import imagesRouter from './routes/images';
 import exportRouter from './routes/export';
+import settingsRouter from './routes/settings';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 
@@ -27,6 +28,7 @@ app.use('/api/alerts', alertsRouter);
 app.use('/api/drafts', draftsRouter);
 app.use('/api/images', imagesRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/settings', settingsRouter);
 
 // Error handling (must be last)
 app.use(errorHandler);
