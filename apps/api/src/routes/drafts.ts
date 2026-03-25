@@ -232,7 +232,7 @@ router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void
 
     // Handle regeneration based on type
     if (type === 'headline' || type === 'all') {
-      const headlines = await claudeService.regenerateHeadline({
+      const headlines = await aiService.regenerateHeadline({
         draftId: id,
         currentHeadline: draft.headline,
         currentSubCaption: draft.subCaption,
@@ -252,7 +252,7 @@ router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void
     }
 
     if (type === 'subCaption' || type === 'all') {
-      const subCaptions = await claudeService.regenerateSubCaption({
+      const subCaptions = await aiService.regenerateSubCaption({
         draftId: id,
         currentHeadline: draft.headline,
         currentSubCaption: draft.subCaption,
@@ -274,7 +274,7 @@ router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void
     if (type === 'slides' || type === 'all') {
       const slideCount = await prisma.slide.count({ where: { draftId: id } }) || 5;
 
-      const slides = await claudeService.regenerateAllSlides({
+      const slides = await aiService.regenerateAllSlides({
         draftId: id,
         currentHeadline: draft.headline,
         currentSubCaption: draft.subCaption,
@@ -287,7 +287,7 @@ router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void
       await prisma.slide.deleteMany({ where: { draftId: id } });
 
       await prisma.slide.createMany({
-        data: slides.map((slide) => ({
+        data: slides.map((slide: { position: number; copy: string }) => ({
           draftId: id,
           position: slide.position,
           copy: slide.copy,
@@ -354,7 +354,7 @@ router.post('/:id/slides/:position/reprompt', async (req: Request, res: Response
 
     const slideCount = await prisma.slide.count({ where: { draftId: id } });
 
-    const newCopy = await claudeService.repromptSlide({
+    const newCopy = await aiService.repromptSlide({
       draftId: id,
       slidePosition: pos,
       currentCopy: slide.copy,

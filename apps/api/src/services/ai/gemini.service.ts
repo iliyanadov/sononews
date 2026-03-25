@@ -89,7 +89,6 @@ Rules for extension slides:
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
-      const response = await result.response;
 
       // Log the AI call
       await this.logAiCall(draftId || null, prompt, responseText, MODEL);

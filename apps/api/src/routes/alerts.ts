@@ -127,7 +127,7 @@ router.post('/:id/create-draft', async (req, res): Promise<void> => {
         brandVoice: settings?.brandVoice || undefined,
         draftId: draft.id,
       })
-      .then(async (content) => {
+      .then(async (content: { headlines: string[]; subCaptions: string[]; extensionSlides: Array<{ position: number; copy: string }> }) => {
         // Update draft with generated content
         await prisma.carouselDraft.update({
           where: { id: draft.id },
@@ -138,7 +138,7 @@ router.post('/:id/create-draft', async (req, res): Promise<void> => {
         });
 
         // Create slides
-        const slides = content.extensionSlides.map((slide) => ({
+        const slides = content.extensionSlides.map((slide: { position: number; copy: string }) => ({
           draftId: draft.id,
           position: slide.position,
           copy: slide.copy,
@@ -151,7 +151,7 @@ router.post('/:id/create-draft', async (req, res): Promise<void> => {
 
         console.log(`[Alerts] AI generation complete for draft ${draft.id}`);
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(`[Alerts] AI generation failed for draft ${draft.id}:`, error);
       });
 

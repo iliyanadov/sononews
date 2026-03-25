@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 const router = express.Router();
 
 // GET /api/settings - Retrieve operator settings
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
     const settings = await prisma.settings.findUnique({
       where: { id: 'default' },
