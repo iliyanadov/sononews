@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { claudeService } from '../services/ai';
 
 const router = Router();
 
@@ -108,10 +109,50 @@ router.post('/:id/create-draft', async (req, res) => {
       data: { status: 'DRAFTING' },
     });
 
+    // Get brand voice from settings
+    const settings = await prisma.settings.findUnique({
+      where: { id: 'default' },
+    });
+
+    // Trigger AI content generation (fire and forget)
+    claudeService
+      .generateContent({
+        tweetText: post.text,
+        brandVoice: settings?.brandVoice || undefined,
+        draftId: draft.id,
+      })
+      .then(async (content) => {
+        // Update draft with generated content
+        await prisma.carouselDraft.update({
+          where: { id: draft.id },
+          data: {
+            headline: content.headlines[0],
+            subCaption: content.subCaptions[0],
+          },
+        });
+
+        // Create slides
+        const slides = content.extensionSlides.map((slide) => ({
+          draftId: draft.id,
+          position: slide.position,
+          copy: slide.copy,
+          isAiGenerated: true,
+        }));
+
+        await prisma.slide.createMany({
+          data: slides,
+        });
+
+        console.log(`[Alerts] AI generation complete for draft ${draft.id}`);
+      })
+      .catch((error) => {
+        console.error(`[Alerts] AI generation failed for draft ${draft.id}:`, error);
+      });
+
     res.json({
       success: true,
       draftId: draft.id,
-      message: 'Draft created successfully',
+      message: 'Draft created and AI generation started',
     });
   } catch (error) {
     console.error('Error creating draft:', error);
