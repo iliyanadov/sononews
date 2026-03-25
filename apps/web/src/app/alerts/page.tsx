@@ -27,6 +27,8 @@ export default function AlertsPage() {
   const [showDismissed, setShowDismissed] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [dismissing, setDismissing] = useState<Record<string, boolean>>({});
+  const [creatingDraft, setCreatingDraft] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchAlerts();
@@ -63,6 +65,7 @@ export default function AlertsPage() {
   }
 
   async function dismissAlert(id: string) {
+    setDismissing({ ...dismissing, [id]: true });
     try {
       await fetch(`http://localhost:3001/api/alerts/${id}/dismiss`, {
         method: 'POST',
@@ -70,10 +73,12 @@ export default function AlertsPage() {
       await fetchAlerts();
     } catch (error) {
       console.error('Failed to dismiss alert:', error);
+      setDismissing({ ...dismissing, [id]: false });
     }
   }
 
   async function createDraft(id: string) {
+    setCreatingDraft({ ...creatingDraft, [id]: true });
     try {
       const response = await fetch(`http://localhost:3001/api/alerts/${id}/create-draft`, {
         method: 'POST',
@@ -83,6 +88,8 @@ export default function AlertsPage() {
       // TODO: Navigate to editor
     } catch (error) {
       console.error('Failed to create draft:', error);
+    } finally {
+      setCreatingDraft({ ...creatingDraft, [id]: false });
     }
   }
 
@@ -207,9 +214,20 @@ export default function AlertsPage() {
 
         {alerts.length === 0 && (
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <p>No alerts yet. The scraper is monitoring for viral content...</p>
+            <CardContent className="pt-12">
+              <div className="text-center text-muted-foreground space-y-4">
+                <div className="text-6xl">📭</div>
+                <p className="font-medium">No alerts yet</p>
+                <p className="text-sm">
+                  {showDismissed
+                    ? 'No dismissed alerts to show'
+                    : 'The scraper is monitoring for viral content...'}
+                </p>
+                {!loading && (
+                  <Button onClick={() => fetchAlerts()} variant="outline" size="sm">
+                    Check Now
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
