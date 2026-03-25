@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageSearch } from '@/components/ImageSearch';
+import { SlidePreview, ExtensionSlidePreview } from '@/components/SlidePreview';
 import { createHistory } from '@/lib/undo';
 
 interface SourcePost {
@@ -54,6 +55,7 @@ export default function DraftEditorPage() {
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [history, setHistory] = useState<Draft[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -543,9 +545,43 @@ export default function DraftEditorPage() {
             >
               📥 Export JSON
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? '📝 Edit' : '👁️ Preview'}
+            </Button>
           </div>
         </div>
 
+        {/* Preview Mode */}
+        {showPreview ? (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Slide Preview</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SlidePreview
+                  headline={draft.headline}
+                  subCaption={draft.subCaption}
+                  thumbnailUrl={draft.thumbnailUrl}
+                  slideNumber={1}
+                />
+                {draft.slides
+                  .filter(s => s.position > 1)
+                  .sort((a, b) => a.position - b.position)
+                  .map((slide) => (
+                    <ExtensionSlidePreview
+                      key={slide.id}
+                      slideNumber={slide.position}
+                      copy={slide.copy}
+                    />
+                  ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
         {/* Source Post */}
         <Card className="mb-6">
           <CardHeader>
@@ -870,6 +906,8 @@ export default function DraftEditorPage() {
             </div>
           </CardContent>
         </Card>
+          </div>
+        )}
 
         {/* Image Search Modal */}
         {showImageSearch && (
