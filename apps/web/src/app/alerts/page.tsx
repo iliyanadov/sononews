@@ -170,7 +170,8 @@ export default function AlertsPage() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <Badge
-                        variant={alert.currentLph >= 500 ? 'destructive' : 'secondary'}
+                        variant={getLPHVariant(alert.currentLph)}
+                        className={getLPHColor(alert.currentLph)}
                       >
                         {alert.currentLph.toFixed(0)} LPH
                       </Badge>
