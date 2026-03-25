@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostStatus {
+  NEW
+  ALERTED
+  DRAFTING
+  PUBLISHED
+  DISMISSED
+}
+
+model SourcePost {
+  id            String        @id // X/Twitter post ID
+  text          String
+  mediaUrls     String[]
+  postedAt      DateTime
+  likeSnapshots Json[]        // Array of {count: number, scrapedAt: string}
+  currentLph    Float         @default(0)
+  alertFired    Boolean       @default(false)
+  status        PostStatus    @default(NEW)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  drafts        CarouselDraft[]
+}
+
+model CarouselDraft {
+  id            String     @id @default(uuid())
+  sourcePostId  String
+  sourcePost    SourcePost @relation(fields: [sourcePostId], references: [id])
+  headline      String     @default("")
+  subCaption    String     @default("")
+  slides        Slide[]
+  thumbnailUrl  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Slide {
+  id             String        @id @default(uuid())
+  draftId        String
+  draft          CarouselDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  position       Int
+  copy           String        @default("")
+  isAiGenerated  Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([draftId, position])
+}
+
+model Settings {
+  id                  String   @id @default("default")
+  lphThreshold        Float    @default(500)
+  pollIntervalMinutes Int      @default(15)
+  monitoringWindowHrs Int      @default(24)
+  brandVoice          String   @default("")
+  pushNotifications   Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}
+
+model AiLog {
+  id          String   @id @default(uuid())
+  draftId     String?
+  prompt      String
+  response    String
+  model       String
+  createdAt   DateTime @default(now())
+}
