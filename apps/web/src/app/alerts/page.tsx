@@ -29,6 +29,7 @@ export default function AlertsPage() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [dismissing, setDismissing] = useState<Record<string, boolean>>({});
   const [creatingDraft, setCreatingDraft] = useState<Record<string, boolean>>({});
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   useEffect(() => {
     fetchAlerts();
@@ -70,9 +71,11 @@ export default function AlertsPage() {
       await fetch(`http://localhost:3001/api/alerts/${id}/dismiss`, {
         method: 'POST',
       });
+      setNotification({ type: 'success', message: 'Alert dismissed' });
       await fetchAlerts();
     } catch (error) {
       console.error('Failed to dismiss alert:', error);
+      setNotification({ type: 'error', message: 'Failed to dismiss alert' });
       setDismissing({ ...dismissing, [id]: false });
     }
   }
@@ -84,10 +87,11 @@ export default function AlertsPage() {
         method: 'POST',
       });
       const data = await response.json();
-      console.log('Draft created:', data.draftId);
+      setNotification({ type: 'success', message: `Draft created! ID: ${data.draftId}` });
       // TODO: Navigate to editor
     } catch (error) {
       console.error('Failed to create draft:', error);
+      setNotification({ type: 'error', message: 'Failed to create draft' });
     } finally {
       setCreatingDraft({ ...creatingDraft, [id]: false });
     }
