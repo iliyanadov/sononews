@@ -88,12 +88,21 @@ export default function AlertsPage() {
       });
       const data = await response.json();
       setNotification({ type: 'success', message: `Draft created! ID: ${data.draftId}` });
-      // TODO: Navigate to editor
     } catch (error) {
       console.error('Failed to create draft:', error);
       setNotification({ type: 'error', message: 'Failed to create draft' });
     } finally {
       setCreatingDraft({ ...creatingDraft, [id]: false });
+    }
+  }
+
+  async function copyTweetText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotification({ type: 'success', message: 'Copied to clipboard!' });
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      setNotification({ type: 'error', message: 'Failed to copy' });
     }
   }
 
@@ -206,7 +215,15 @@ export default function AlertsPage() {
                   </div>
                 )}
                 <p className="text-sm mb-4 line-clamp-3">{alert.text}</p>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => copyTweetText(alert.text)}
+                    title="Copy tweet text"
+                  >
+                    📋 Copy
+                  </Button>
                   {alert.status !== 'DISMISSED' && (
                     <>
                       <Button
