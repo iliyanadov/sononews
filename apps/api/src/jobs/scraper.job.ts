@@ -2,7 +2,7 @@ import { Job, Worker } from 'bullmq';
 import { prisma } from '../lib/prisma';
 import { getScraper } from '../services/scraper';
 import { calculateLPH, shouldTriggerAlert } from '../services/scoring';
-import { QUEUE_NAMES, TWITTER_SOURCE_ACCOUNT } from '@sononews/shared';
+import { QUEUE_NAMES } from '@sononews/shared';
 import { redis } from '../lib/redis';
 
 /**
@@ -20,7 +20,8 @@ export async function scrapeTimelineJob(job: Job) {
     const threshold = settings?.lphThreshold ?? 500;
 
     // Fetch latest posts from timeline
-    const scrapedPosts = await scraper.fetchUserTimeline(TWITTER_SOURCE_ACCOUNT);
+    const sourceAccount = process.env.TWITTER_SOURCE_ACCOUNT || 'Kurrco';
+    const scrapedPosts = await scraper.fetchUserTimeline(sourceAccount);
 
     let updatedCount = 0;
     let alertCount = 0;

@@ -11,7 +11,10 @@ export function getScraper(): XScraperAdapter {
 
   const apiKey = process.env.TWITTER_API_KEY;
 
-  if (!apiKey || process.env.NODE_ENV === 'development' || process.env.USE_MOCK_SCRAPER === 'true') {
+  // Use real API if explicitly disabled mock mode AND we have an API key
+  const useMock = process.env.USE_MOCK_SCRAPER !== 'false' || !apiKey;
+
+  if (useMock) {
     console.log('📭 Using MockXScraperAdapter (development mode)');
     scraperInstance = new MockXScraperAdapter();
   } else {

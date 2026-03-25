@@ -10,7 +10,7 @@ A full-stack web tool that monitors the X/Twitter account @Kurrco for hip-hop ne
 - **Database**: PostgreSQL with Prisma ORM
 - **Job Queue**: BullMQ with Redis
 - **X Data Source**: TwitterAPI.io (REST API, pay-as-you-go)
-- **AI**: Anthropic Claude API
+- **AI**: Gemini 2.5 Flash (development), Claude Haiku 4.5 (production)
 - **Image Search**: Google Custom Search JSON API
 
 ## Project Structure
