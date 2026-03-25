@@ -16,13 +16,15 @@ interface Image {
 interface ImageSearchProps {
   onSelectImage: (imageUrl: string) => void;
   onClose: () => void;
+  allowUpload?: boolean;
 }
 
-export function ImageSearch({ onSelectImage, onClose }: ImageSearchProps) {
+export function ImageSearch({ onSelectImage, onClose, allowUpload = true }: ImageSearchProps) {
   const [query, setQuery] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   async function handleSearch() {
     if (!query.trim()) return;
@@ -50,6 +52,27 @@ export function ImageSearch({ onSelectImage, onClose }: ImageSearchProps) {
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        onSelectImage(dataUrl);
+        onClose();
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('File upload failed:', error);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="max-w-4xl w-full max-h-[80vh] overflow-hidden">
@@ -60,6 +83,28 @@ export function ImageSearch({ onSelectImage, onClose }: ImageSearchProps) {
               ✕
             </Button>
           </div>
+
+          {allowUpload && (
+            <div className="mb-4 p-4 border-2 border-dashed rounded-lg text-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <div className="text-2xl mb-1">📁</div>
+                <p className="text-sm font-medium">
+                  {uploading ? 'Uploading...' : 'Click to upload an image'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Supports JPG, PNG, GIF, WebP
+                </p>
+              </label>
+            </div>
+          )}
 
           <div className="flex gap-2 mb-4">
             <Input

@@ -98,12 +98,15 @@ export default function HomePage() {
           {/* Navigation */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button asChild variant="default" className="flex-1">
                   <a href="/alerts">View Alerts</a>
                 </Button>
                 <Button asChild variant="outline" className="flex-1">
                   <a href="/drafts">View Drafts</a>
+                </Button>
+                <Button asChild variant="outline" className="flex-1">
+                  <a href="/history">Post History</a>
                 </Button>
               </div>
             </CardContent>
