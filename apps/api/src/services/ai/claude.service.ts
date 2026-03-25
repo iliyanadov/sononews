@@ -6,9 +6,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
-const MODEL = process.env.NODE_ENV === 'production'
-  ? 'claude-haiku-4-5-20251001'
-  : 'claude-sonnet-4-6'; // Using Sonnet for dev since we're using Anthropic SDK
+const MODEL = 'claude-haiku-4-5-20251001'; // Haiku 4.5: Fast, cost-effective, capable fallback
 
 interface GenerateContentOptions {
   tweetText: string;
