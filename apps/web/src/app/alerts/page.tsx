@@ -87,7 +87,12 @@ export default function AlertsPage() {
         method: 'POST',
       });
       const data = await response.json();
-      setNotification({ type: 'success', message: `Draft created! ID: ${data.draftId}` });
+      setNotification({ type: 'success', message: 'Draft created! Redirecting...' });
+
+      // Navigate to draft editor after a short delay
+      setTimeout(() => {
+        window.location.href = `/drafts/${data.draftId}`;
+      }, 1000);
     } catch (error) {
       console.error('Failed to create draft:', error);
       setNotification({ type: 'error', message: 'Failed to create draft' });

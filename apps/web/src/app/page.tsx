@@ -101,8 +101,8 @@ export default function HomePage() {
                 <Button asChild variant="default" className="flex-1">
                   <a href="/alerts">View Alerts</a>
                 </Button>
-                <Button asChild variant="outline" className="flex-1" disabled>
-                  <a href="#">Editor (Coming Soon)</a>
+                <Button asChild variant="outline" className="flex-1">
+                  <a href="/drafts">View Drafts</a>
                 </Button>
               </div>
             </CardContent>
