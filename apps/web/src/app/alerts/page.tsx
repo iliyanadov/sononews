@@ -25,10 +25,23 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchAlerts();
   }, [showDismissed]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchAlerts();
+      setLastRefresh(new Date());
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, showDismissed]);
 
   async function fetchAlerts() {
     try {
@@ -117,8 +130,22 @@ export default function AlertsPage() {
               />
               <span>Show dismissed alerts</span>
             </label>
+            <label className="flex items-center space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="rounded"
+              />
+              <span>Auto-refresh (30s)</span>
+            </label>
           </div>
-          <Badge variant="secondary">{alerts.length} alerts</Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary">{alerts.length} alerts</Badge>
+            <span className="text-xs text-muted-foreground">
+              Last refresh: {lastRefresh.toLocaleTimeString()}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-4">
