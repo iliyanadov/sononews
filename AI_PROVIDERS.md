@@ -1,6 +1,30 @@
-# Gemini Integration Status
+# AI Provider Configuration
 
-**Status:** ✅ Code Complete & Verified | ✅ Automatic Fallback Enabled | ⚠️ Free Tier Quota Exhausted
+**Status:** ✅ Dual AI Provider System | ✅ Automatic Fallback | ✅ Cost-Optimized
+
+## 🎯 Current AI Configuration
+
+### Development Mode (NODE_ENV=development)
+- **Primary:** Gemini Flash 2.0 Lite (`gemini-2.0-flash-lite`)
+  - Cost: Free tier
+  - Speed: Fast
+  - Limit: 15 requests/minute (when not quota-exhausted)
+
+- **Fallback:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+  - Cost: $0.25/1M input tokens, $1.25/1M output tokens
+  - Speed: Very fast (~2-3 seconds)
+  - Capacity: High (no practical limits)
+
+### Production Mode (NODE_ENV=production)
+- **Primary:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+  - Cost: Same as above
+  - Speed: Very fast
+  - Capacity: High
+
+- **Fallback:** Gemini Flash 2.0 Lite (`gemini-2.0-flash-lite`)
+  - Cost: Free
+  - Speed: Fast
+  - Capacity: Limited by quota
 
 ## 🎉 Latest Update: Automatic Fallback
 
@@ -141,26 +165,45 @@ The KurrAlert system is **production-ready** with intelligent dual AI provider s
 
 ### Development Mode (NODE_ENV=development)
 - **Primary:** Gemini Flash 2.0 Lite (free tier)
-- **Fallback:** Claude Sonnet 4.6 (paid tier)
-- **Current Status:** Gemini quota exhausted, using Claude fallback ✅
+- **Fallback:** Claude Haiku 4.5 (paid tier)
+- **Current Status:** Gemini quota exhausted, using Haiku fallback ✅
 
 ### Production Mode (NODE_ENV=production)
-- **Primary:** Claude Sonnet 4.6 (paid tier)
+- **Primary:** Claude Haiku 4.5 (paid tier, cost-optimized)
 - **Fallback:** Gemini Flash 2.0 Lite (backup)
 - **Recommended:** Use this mode with valid Claude API key
+
+### Why Haiku 4.5?
+
+**Cost Optimization:**
+- **Input:** $0.25 per million tokens (vs Sonnet's $3.00)
+- **Output:** $1.25 per million tokens (vs Sonnet's $15.00)
+- **~12x cheaper** than Sonnet 4.6
+
+**Performance:**
+- **Response time:** 2-3 seconds (vs Sonnet's 5-8 seconds)
+- **Speed:** Ideal for real-time applications
+- **Quality:** Excellent for content generation tasks
+
+**Use Case Fit:**
+- Carousel content generation (headlines, captions, slides)
+- Does not require complex reasoning
+- Fast, high-quality output sufficient
+- Perfect for fallback/proxy scenarios
 
 ### Key Features
 - ✅ Automatic fallback with zero downtime
 - ✅ Smart failure caching (1 min) to avoid repeated attempts
 - ✅ Comprehensive logging for debugging
 - ✅ Self-healing - automatically recovers when primary provider is available
+- ✅ Cost-optimized with Haiku 4.5
 - ✅ No manual intervention needed
 
 ### Integration Status
 - **Code:** Complete and verified ✅
 - **Testing:** Extensive testing completed ✅
 - **Fallback:** Production-ready ✅
-- **Quota:** Gemini free tier exhausted ⚠️
-- **Solution:** Automatic fallback to Claude working ✅
+- **Model:** Upgraded to Haiku 4.5 for cost efficiency ✅
+- **Quota:** Gemini free tier exhausted (using Haiku fallback) ✅
 
-**The system is fully functional with automatic fallback.** No immediate action required unless you want to prioritize one provider over another.
+**The system is fully functional with automatic fallback and cost-optimized AI providers.**
