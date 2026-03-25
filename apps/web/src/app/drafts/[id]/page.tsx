@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -340,7 +340,7 @@ export default function DraftEditorPage() {
               <div className="space-y-2">
                 <Input
                   value={headlineInput}
-                  onChange={(e) => setHeadlineInput(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHeadlineInput(e.target.value)}
                   placeholder="Enter headline..."
                 />
                 <div className="flex gap-2">
@@ -390,7 +390,7 @@ export default function DraftEditorPage() {
               <div className="space-y-2">
                 <Textarea
                   value={captionInput}
-                  onChange={(e) => setCaptionInput(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCaptionInput(e.target.value)}
                   placeholder="Enter caption..."
                   rows={3}
                 />
@@ -452,7 +452,7 @@ export default function DraftEditorPage() {
                       <div className="space-y-2">
                         <Textarea
                           value={slideCopy}
-                          onChange={(e) => setSlideCopy(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlideCopy(e.target.value)}
                           rows={3}
                         />
                         <div className="flex gap-2">

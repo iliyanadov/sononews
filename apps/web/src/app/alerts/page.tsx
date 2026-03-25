@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -124,6 +124,20 @@ export default function AlertsPage() {
     return `${diffDays}d ago`;
   }
 
+  function getLPHVariant(lph: number): 'default' | 'secondary' | 'destructive' | 'outline' {
+    if (lph >= 5000) return 'destructive';
+    if (lph >= 2000) return 'default';
+    if (lph >= 1000) return 'secondary';
+    return 'outline';
+  }
+
+  function getLPHColor(lph: number): string {
+    if (lph >= 5000) return 'bg-red-500 hover:bg-red-600 text-white';
+    if (lph >= 2000) return 'bg-orange-500 hover:bg-orange-600 text-white';
+    if (lph >= 1000) return 'bg-yellow-500 hover:bg-yellow-600 text-black';
+    return 'bg-slate-500 hover:bg-slate-600 text-white';
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-8">
@@ -146,6 +160,14 @@ export default function AlertsPage() {
             Viral hip-hop news from @{process.env.NEXT_PUBLIC_TWITTER_ACCOUNT || 'ComplexMusic'}
           </p>
         </div>
+
+        {notification && (
+          <div className={`mb-4 p-4 rounded-lg ${
+            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}>
+            {notification.message}
+          </div>
+        )}
 
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-4">
