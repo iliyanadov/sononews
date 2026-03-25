@@ -110,10 +110,10 @@ export default function HomePage() {
           </Card>
 
           {/* Features */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Monitor @Kurrco</CardTitle>
+                <CardTitle className="text-lg">🎯 Viral Detection</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -124,7 +124,7 @@ export default function HomePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">AI Content Generation</CardTitle>
+                <CardTitle className="text-lg">🤖 AI Content Generation</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -135,27 +135,26 @@ export default function HomePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Visual Editor</CardTitle>
+                <CardTitle className="text-lg">✏️ Visual Editor</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Edit and refine generated content with an intuitive visual editor before exporting.
+                  Edit and refine generated content with an intuitive visual editor. Regenerate, reprompt, and customize.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">🖼️ Image Search & Export</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Search and add cover images to your carousels. Export your finished drafts as JSON.
                 </p>
               </CardContent>
             </Card>
           </div>
-
-          {/* Coming Soon */}
-          <Card className="border-dashed">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-2">
-                <p className="text-sm font-medium">More features coming soon</p>
-                <p className="text-xs text-muted-foreground">
-                  Alert dashboard • Content editor • Image search • Export functionality
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </main>
