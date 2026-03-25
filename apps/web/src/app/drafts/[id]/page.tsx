@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageSearch } from '@/components/ImageSearch';
 
 interface SourcePost {
   id: string;
@@ -49,6 +50,7 @@ export default function DraftEditorPage() {
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [slideCopy, setSlideCopy] = useState('');
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [showImageSearch, setShowImageSearch] = useState(false);
 
   useEffect(() => {
     if (id) fetchDraft();
@@ -110,6 +112,28 @@ export default function DraftEditorPage() {
     } catch (error) {
       console.error('Failed to save caption:', error);
       showNotification('error', 'Failed to save caption');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleImageSelect(imageUrl: string) {
+    if (!draft) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/drafts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ thumbnailUrl: imageUrl }),
+      });
+      if (!response.ok) throw new Error('Failed to update thumbnail');
+
+      setDraft({ ...draft, thumbnailUrl: imageUrl });
+      setShowImageSearch(false);
+      showNotification('success', 'Thumbnail updated');
+    } catch (error) {
+      console.error('Failed to save thumbnail:', error);
+      showNotification('error', 'Failed to save thumbnail');
     } finally {
       setSaving(false);
     }
@@ -370,6 +394,50 @@ export default function DraftEditorPage() {
           </CardContent>
         </Card>
 
+        {/* Thumbnail */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Cover Image</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowImageSearch(true)}
+              >
+                Search Images
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {draft.thumbnailUrl ? (
+              <div className="space-y-2">
+                <img
+                  src={draft.thumbnailUrl}
+                  alt="Draft thumbnail"
+                  className="w-full h-48 object-cover rounded"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={async () => {
+                    await handleImageSelect('');
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <div
+                className="p-12 bg-muted rounded text-center text-muted-foreground cursor-pointer hover:bg-muted/80"
+                onClick={() => setShowImageSearch(true)}
+              >
+                <div className="text-4xl mb-2">🖼️</div>
+                <p>Click to add a cover image</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Sub Caption */}
         <Card className="mb-6">
           <CardHeader>
@@ -502,6 +570,14 @@ export default function DraftEditorPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Image Search Modal */}
+        {showImageSearch && (
+          <ImageSearch
+            onSelectImage={handleImageSelect}
+            onClose={() => setShowImageSearch(false)}
+          />
+        )}
       </div>
     </main>
   );
