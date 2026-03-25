@@ -50,8 +50,11 @@ export default function AlertsPage() {
         : 'http://localhost:3001/api/alerts';
 
       const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch alerts');
+
       const data: AlertsResponse = await response.json();
       setAlerts(data.alerts);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to fetch alerts:', error);
     } finally {
