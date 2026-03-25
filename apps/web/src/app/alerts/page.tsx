@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NotificationPermissionBanner } from '@/components/NotificationPermissionBanner';
+import { showNotification } from '@/lib/push';
 
 interface AlertPost {
   id: string;
@@ -30,6 +32,7 @@ export default function AlertsPage() {
   const [dismissing, setDismissing] = useState<Record<string, boolean>>({});
   const [creatingDraft, setCreatingDraft] = useState<Record<string, boolean>>({});
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [previousAlertCount, setPreviousAlertCount] = useState(0);
 
   useEffect(() => {
     fetchAlerts();
@@ -56,7 +59,18 @@ export default function AlertsPage() {
       if (!response.ok) throw new Error('Failed to fetch alerts');
 
       const data: AlertsResponse = await response.json();
+
+      // Check for new alerts and notify
+      if (data.alerts.length > previousAlertCount && previousAlertCount > 0) {
+        const newAlertsCount = data.alerts.length - previousAlertCount;
+        showNotification(
+          `🚨 ${newAlertsCount} new viral ${newAlertsCount === 1 ? 'post' : 'posts'} detected!`,
+          { body: `LPH: ${data.alerts[0].currentLph.toFixed(0)} • ${data.alerts[0].text.slice(0, 100)}...` }
+        );
+      }
+
       setAlerts(data.alerts);
+      setPreviousAlertCount(data.alerts.length);
       setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to fetch alerts:', error);
@@ -160,6 +174,8 @@ export default function AlertsPage() {
             Viral hip-hop news from @{process.env.NEXT_PUBLIC_TWITTER_ACCOUNT || 'ComplexMusic'}
           </p>
         </div>
+
+        <NotificationPermissionBanner />
 
         {notification && (
           <div className={`mb-4 p-4 rounded-lg ${
