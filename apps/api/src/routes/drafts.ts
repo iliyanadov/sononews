@@ -403,6 +403,132 @@ router.patch('/:id/slides/:position', async (req: Request, res: Response): Promi
   }
 });
 
+// DELETE /api/drafts/:id/slides/:pos - Delete specific slide
+router.delete('/:id/slides/:position', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id, position } = req.params;
+    const posToDelete = parseInt(position);
+
+    // Get all slides for this draft
+    const allSlides = await prisma.slide.findMany({
+      where: { draftId: id },
+      orderBy: { position: 'asc' },
+    });
+
+    if (allSlides.length === 0) {
+      res.status(404).json({ error: 'No slides found' });
+      return;
+    }
+
+    // Delete the slide
+    await prisma.slide.deleteMany({
+      where: {
+        draftId: id,
+        position: posToDelete,
+      },
+    });
+
+    // Reorder remaining slides
+    const updatePromises = allSlides
+      .filter(s => s.position > posToDelete)
+      .map(slide =>
+        prisma.slide.update({
+          where: { id: slide.id },
+          data: { position: slide.position - 1 },
+        })
+      );
+
+    await Promise.all(updatePromises);
+
+    res.json({ message: 'Slide deleted and remaining slides reordered' });
+  } catch (error) {
+    console.error('[Drafts] Delete slide failed:', error);
+    res.status(500).json({ error: 'Failed to delete slide' });
+  }
+});
+
+// POST /api/drafts/:id/slides - Add new slide
+router.post('/:id/slides', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { position, copy } = req.body;
+
+    // Get current max position
+    const maxSlide = await prisma.slide.findFirst({
+      where: { draftId: id },
+      orderBy: { position: 'desc' },
+    });
+
+    const newPosition = position !== undefined
+      ? parseInt(position as string)
+      : (maxSlide?.position ?? 0) + 1;
+
+    // If inserting in middle, shift existing slides down
+    if (maxSlide && newPosition <= maxSlide.position) {
+      await prisma.slide.updateMany({
+        where: {
+          draftId: id,
+          position: { gte: newPosition },
+        },
+        data: {
+          position: { increment: 1 },
+        },
+      });
+    }
+
+    const slide = await prisma.slide.create({
+      data: {
+        draftId: id,
+        position: newPosition,
+        copy: copy || '',
+        isAiGenerated: false,
+      },
+    });
+
+    res.json(slide);
+  } catch (error) {
+    console.error('[Drafts] Add slide failed:', error);
+    res.status(500).json({ error: 'Failed to add slide' });
+  }
+});
+
+// PUT /api/drafts/:id/slides/reorder - Reorder slides
+router.put('/:id/slides/reorder', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { slideIds } = req.body; // Array of slide IDs in new order
+
+    if (!Array.isArray(slideIds)) {
+      res.status(400).json({ error: 'slideIds must be an array' });
+      return;
+    }
+
+    // Update each slide's position
+    const updatePromises = slideIds.map((slideId: string, index: number) =>
+      prisma.slide.update({
+        where: { id: slideId },
+        data: { position: index + 1 },
+      })
+    );
+
+    await Promise.all(updatePromises);
+
+    const updatedDraft = await prisma.carouselDraft.findUnique({
+      where: { id },
+      include: {
+        slides: {
+          orderBy: { position: 'asc' },
+        },
+      },
+    });
+
+    res.json(updatedDraft);
+  } catch (error) {
+    console.error('[Drafts] Reorder slides failed:', error);
+    res.status(500).json({ error: 'Failed to reorder slides' });
+  }
+});
+
 // DELETE /api/drafts/:id - Delete draft
 router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {

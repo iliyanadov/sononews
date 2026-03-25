@@ -266,6 +266,101 @@ export default function DraftEditorPage() {
     }
   }
 
+  async function addSlide() {
+    setSaving(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/drafts/${id}/slides`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ copy: '' }),
+      });
+      if (!response.ok) throw new Error('Failed to add slide');
+
+      await fetchDraft();
+      showNotification('success', 'Slide added');
+    } catch (error) {
+      console.error('Failed to add slide:', error);
+      showNotification('error', 'Failed to add slide');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeSlide(slideId: string, position: number) {
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/drafts/${id}/slides/${position}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error('Failed to remove slide');
+
+      await fetchDraft();
+      showNotification('success', 'Slide removed');
+    } catch (error) {
+      console.error('Failed to remove slide:', error);
+      showNotification('error', 'Failed to remove slide');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function moveSlideUp(slideId: string, position: number) {
+    if (position <= 2) return; // Can't move cover slide or slide 2 above position 1
+    setSaving(true);
+    try {
+      const slides = draft?.slides || [];
+      const currentIndex = slides.findIndex(s => s.id === slideId);
+      if (currentIndex <= 0) return;
+
+      const newOrder = [...slides];
+      [newOrder[currentIndex - 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex - 1]];
+
+      const response = await fetch(`http://localhost:3001/api/drafts/${id}/slides/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slideIds: newOrder.map(s => s.id) }),
+      });
+      if (!response.ok) throw new Error('Failed to reorder slides');
+
+      await fetchDraft();
+      showNotification('success', 'Slide moved up');
+    } catch (error) {
+      console.error('Failed to move slide:', error);
+      showNotification('error', 'Failed to move slide');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function moveSlideDown(slideId: string, position: number) {
+    if (position === 1) return; // Can't move cover slide
+    setSaving(true);
+    try {
+      const slides = draft?.slides || [];
+      const currentIndex = slides.findIndex(s => s.id === slideId);
+      if (currentIndex === -1 || currentIndex >= slides.length - 1) return;
+
+      const newOrder = [...slides];
+      [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
+
+      const response = await fetch(`http://localhost:3001/api/drafts/${id}/slides/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slideIds: newOrder.map(s => s.id) }),
+      });
+      if (!response.ok) throw new Error('Failed to reorder slides');
+
+      await fetchDraft();
+      showNotification('success', 'Slide moved down');
+    } catch (error) {
+      console.error('Failed to move slide:', error);
+      showNotification('error', 'Failed to move slide');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function showNotification(type: 'success' | 'error', message: string) {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
@@ -386,20 +481,25 @@ export default function DraftEditorPage() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHeadlineInput(e.target.value)}
                   placeholder="Enter headline..."
                 />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={saveHeadline} disabled={saving}>
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditingHeadline(false);
-                      setHeadlineInput(draft.headline);
-                    }}
-                  >
-                    Cancel
-                  </Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {headlineInput.length} chars
+                  </span>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={saveHeadline} disabled={saving}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingHeadline(false);
+                        setHeadlineInput(draft.headline);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -408,6 +508,9 @@ export default function DraftEditorPage() {
                 onClick={() => setEditingHeadline(true)}
               >
                 {draft.headline || 'Click to add headline...'}
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({draft.headline.length} chars)
+                </span>
               </div>
             )}
           </CardContent>
@@ -481,20 +584,25 @@ export default function DraftEditorPage() {
                   placeholder="Enter caption..."
                   rows={3}
                 />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={saveCaption} disabled={saving}>
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditingCaption(false);
-                      setCaptionInput(draft.subCaption);
-                    }}
-                  >
-                    Cancel
-                  </Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {captionInput.length} chars • {captionInput.split(/\s+/).filter(w => w).length} words
+                  </span>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={saveCaption} disabled={saving}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingCaption(false);
+                        setCaptionInput(draft.subCaption);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -503,6 +611,9 @@ export default function DraftEditorPage() {
                 onClick={() => setEditingCaption(true)}
               >
                 {draft.subCaption || 'Click to add caption...'}
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({draft.subCaption.length} chars)
+                </span>
               </div>
             )}
           </CardContent>
@@ -528,13 +639,54 @@ export default function DraftEditorPage() {
               {draft.slides
                 .sort((a, b) => a.position - b.position)
                 .map((slide) => (
-                  <div key={slide.id} className="border rounded-lg p-4 space-y-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline">Slide {slide.position}</Badge>
-                      {slide.isAiGenerated && (
-                        <Badge variant="secondary" className="text-xs">AI Generated</Badge>
-                      )}
+                  <div key={slide.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Slide {slide.position}</Badge>
+                        {slide.isAiGenerated && (
+                          <Badge variant="secondary" className="text-xs">AI Generated</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        {slide.position > 2 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => moveSlideUp(slide.id, slide.position)}
+                            disabled={saving}
+                            title="Move up"
+                          >
+                            ↑
+                          </Button>
+                        )}
+                        {slide.position > 1 && slide.position < draft.slides.length && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => moveSlideDown(slide.id, slide.position)}
+                            disabled={saving}
+                            title="Move down"
+                          >
+                            ↓
+                          </Button>
+                        )}
+                        {slide.position > 1 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => removeSlide(slide.id, slide.position)}
+                            disabled={saving}
+                            title="Remove slide"
+                          >
+                            🗑️
+                          </Button>
+                        )}
+                      </div>
                     </div>
+
                     {editingSlide === slide.id ? (
                       <div className="space-y-2">
                         <Textarea
@@ -542,50 +694,81 @@ export default function DraftEditorPage() {
                           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSlideCopy(e.target.value)}
                           rows={3}
                         />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => saveSlide(slide.id, slideCopy)}
-                            disabled={saving}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingSlide(null)}
-                          >
-                            Cancel
-                          </Button>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {slideCopy.length} chars • {slideCopy.split(/\s+/).filter(w => w).length} words
+                          </span>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => saveSlide(slide.id, slideCopy)}
+                              disabled={saving}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingSlide(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <p className="text-sm">{slide.copy}</p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingSlide(slide.id);
-                              setSlideCopy(slide.copy);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => repromptSlide(slide.id)}
-                            disabled={saving}
-                          >
-                            {saving ? 'Regenerating...' : '🔄 Reprompt'}
-                          </Button>
+                        <p className="text-sm">{slide.copy || <span className="text-muted-foreground italic">Empty slide</span>}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {slide.copy.length} chars • {slide.copy.split(/\s+/).filter(w => w).length} words
+                          </span>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingSlide(slide.id);
+                                setSlideCopy(slide.copy);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => repromptSlide(slide.id)}
+                              disabled={saving}
+                            >
+                              {saving ? 'Regenerating...' : '🔄 Reprompt'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                navigator.clipboard.writeText(slide.copy);
+                                showNotification('success', 'Copied to clipboard!');
+                              }}
+                            >
+                              📋
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
                 ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={addSlide}
+                disabled={saving}
+              >
+                + Add New Slide
+              </Button>
             </div>
           </CardContent>
         </Card>
