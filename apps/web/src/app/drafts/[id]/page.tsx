@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageSearch } from '@/components/ImageSearch';
+import { createHistory } from '@/lib/undo';
 
 interface SourcePost {
   id: string;
@@ -51,6 +52,70 @@ export default function DraftEditorPage() {
   const [slideCopy, setSlideCopy] = useState('');
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [showImageSearch, setShowImageSearch] = useState(false);
+  const [history, setHistory] = useState<Draft[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [history, historyIndex]);
+
+  function canUndo() {
+    return historyIndex > 0;
+  }
+
+  function canRedo() {
+    return historyIndex < history.length - 1;
+  }
+
+  function undo() {
+    if (!canUndo()) return;
+    const newIndex = historyIndex - 1;
+    setHistoryIndex(newIndex);
+    setDraft(history[newIndex]);
+    setHeadlineInput(history[newIndex].headline);
+    setCaptionInput(history[newIndex].subCaption);
+    showNotification('success', 'Undo');
+  }
+
+  function redo() {
+    if (!canRedo()) return;
+    const newIndex = historyIndex + 1;
+    setHistoryIndex(newIndex);
+    setDraft(history[newIndex]);
+    setHeadlineInput(history[newIndex].headline);
+    setCaptionInput(history[newIndex].subCaption);
+    showNotification('success', 'Redo');
+  }
+
+  function saveToHistory(newDraft: Draft) {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newDraft);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+
+    // Limit history to 50 entries
+    if (newHistory.length > 50) {
+      setHistory(newHistory.slice(-50));
+      setHistoryIndex(49);
+    }
+  }
 
   useEffect(() => {
     if (id) fetchDraft();
@@ -65,6 +130,8 @@ export default function DraftEditorPage() {
       setDraft(data);
       setHeadlineInput(data.headline);
       setCaptionInput(data.subCaption);
+      setHistory([data]);
+      setHistoryIndex(0);
     } catch (error) {
       console.error('Failed to fetch draft:', error);
       showNotification('error', 'Failed to load draft');
@@ -84,7 +151,9 @@ export default function DraftEditorPage() {
       });
       if (!response.ok) throw new Error('Failed to update headline');
 
-      setDraft({ ...draft, headline: headlineInput });
+      const updatedDraft = { ...draft, headline: headlineInput };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setEditingHeadline(false);
       showNotification('success', 'Headline updated');
     } catch (error) {
@@ -106,7 +175,9 @@ export default function DraftEditorPage() {
       });
       if (!response.ok) throw new Error('Failed to update caption');
 
-      setDraft({ ...draft, subCaption: captionInput });
+      const updatedDraft = { ...draft, subCaption: captionInput };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setEditingCaption(false);
       showNotification('success', 'Caption updated');
     } catch (error) {
@@ -128,7 +199,9 @@ export default function DraftEditorPage() {
       });
       if (!response.ok) throw new Error('Failed to update thumbnail');
 
-      setDraft({ ...draft, thumbnailUrl: imageUrl });
+      const updatedDraft = { ...draft, thumbnailUrl: imageUrl };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setShowImageSearch(false);
       showNotification('success', 'Thumbnail updated');
     } catch (error) {
@@ -151,7 +224,9 @@ export default function DraftEditorPage() {
       if (!response.ok) throw new Error('Failed to regenerate headline');
 
       const data = await response.json();
-      setDraft({ ...draft, headline: data.selected });
+      const updatedDraft = { ...draft, headline: data.selected };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setHeadlineInput(data.selected);
       showNotification('success', 'Headline regenerated');
     } catch (error) {
@@ -174,7 +249,9 @@ export default function DraftEditorPage() {
       if (!response.ok) throw new Error('Failed to regenerate caption');
 
       const data = await response.json();
-      setDraft({ ...draft, subCaption: data.selected });
+      const updatedDraft = { ...draft, subCaption: data.selected };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setCaptionInput(data.selected);
       showNotification('success', 'Caption regenerated');
     } catch (error) {
@@ -222,12 +299,14 @@ export default function DraftEditorPage() {
       );
       if (!response.ok) throw new Error('Failed to update slide');
 
-      setDraft({
+      const updatedDraft = {
         ...draft!,
         slides: draft!.slides.map(s =>
           s.id === slideId ? { ...s, copy, isAiGenerated: false } : s
         ),
-      });
+      };
+      setDraft(updatedDraft);
+      saveToHistory(updatedDraft);
       setEditingSlide(null);
       showNotification('success', 'Slide updated');
     } catch (error) {
@@ -420,11 +499,30 @@ export default function DraftEditorPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button asChild variant="outline">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={undo}
+              disabled={!canUndo() || saving}
+              title="Undo (Ctrl+Z)"
+            >
+              ↶ Undo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={redo}
+              disabled={!canRedo() || saving}
+              title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+            >
+              ↷ Redo
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/drafts">← Back</Link>
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={async () => {
                 try {
                   const response = await fetch(`http://localhost:3001/api/export/${id}`);
