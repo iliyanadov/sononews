@@ -1,17 +1,18 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { prisma } from '@/lib/prisma';
 import { claudeService } from '@/services/ai';
-import { PostStatus } from '@sononews/shared';
+import { PostStatus, AiGeneratedContent } from '@sononews/shared';
 
 const router = express.Router();
 
 // POST /api/drafts - Create draft from alert
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const { sourcePostId } = req.body;
 
     if (!sourcePostId) {
-      return res.status(400).json({ error: 'sourcePostId is required' });
+      res.status(400).json({ error: 'sourcePostId is required' });
+      return;
     }
 
     // Verify source post exists
@@ -20,7 +21,8 @@ router.post('/', async (req, res) => {
     });
 
     if (!sourcePost) {
-      return res.status(404).json({ error: 'Source post not found' });
+      res.status(404).json({ error: 'Source post not found' });
+      return;
     }
 
     // Create draft
@@ -48,7 +50,7 @@ router.post('/', async (req, res) => {
         brandVoice: settings?.brandVoice || undefined,
         draftId: draft.id,
       })
-      .then(async (content) => {
+      .then(async (content: AiGeneratedContent) => {
         // Update draft with generated content
         await prisma.carouselDraft.update({
           where: { id: draft.id },
@@ -72,7 +74,7 @@ router.post('/', async (req, res) => {
 
         console.log(`[Drafts] AI generation complete for draft ${draft.id}`);
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(`[Drafts] AI generation failed for draft ${draft.id}:`, error);
       });
 
@@ -87,7 +89,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/drafts/:id - Get draft by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -102,7 +104,8 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!draft) {
-      return res.status(404).json({ error: 'Draft not found' });
+      res.status(404).json({ error: 'Draft not found' });
+      return;
     }
 
     res.json({
@@ -133,13 +136,14 @@ router.get('/:id', async (req, res) => {
 });
 
 // GET /api/drafts - List all drafts
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { limit = '20', offset = '0' } = req.query;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
 
     const drafts = await prisma.carouselDraft.findMany({
-      take: parseInt(limit as string),
-      skip: parseInt(offset as string),
+      take: limit,
+      skip: offset,
       orderBy: { createdAt: 'desc' },
       include: {
         sourcePost: {
@@ -175,8 +179,8 @@ router.get('/', async (req, res) => {
         updatedAt: draft.updatedAt,
       })),
       total,
-      limit: parseInt(limit as string),
-      offset: parseInt(offset as string),
+      limit,
+      offset,
     });
   } catch (error) {
     console.error('[Drafts] List failed:', error);
@@ -185,7 +189,7 @@ router.get('/', async (req, res) => {
 });
 
 // PATCH /api/drafts/:id - Update draft
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { headline, subCaption, thumbnailUrl } = req.body;
@@ -207,7 +211,7 @@ router.patch('/:id', async (req, res) => {
 });
 
 // POST /api/drafts/:id/regenerate - Regenerate content
-router.post('/:id/regenerate', async (req, res) => {
+router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { type = 'all' } = req.body; // 'headline', 'subCaption', 'slides', 'all'
@@ -218,7 +222,8 @@ router.post('/:id/regenerate', async (req, res) => {
     });
 
     if (!draft) {
-      return res.status(404).json({ error: 'Draft not found' });
+      res.status(404).json({ error: 'Draft not found' });
+      return;
     }
 
     const settings = await prisma.settings.findUnique({
@@ -241,7 +246,8 @@ router.post('/:id/regenerate', async (req, res) => {
       });
 
       if (type === 'headline') {
-        return res.json({ headlines, selected: headlines[0] });
+        res.json({ headlines, selected: headlines[0] });
+        return;
       }
     }
 
@@ -260,7 +266,8 @@ router.post('/:id/regenerate', async (req, res) => {
       });
 
       if (type === 'subCaption') {
-        return res.json({ subCaptions, selected: subCaptions[0] });
+        res.json({ subCaptions, selected: subCaptions[0] });
+        return;
       }
     }
 
@@ -289,7 +296,8 @@ router.post('/:id/regenerate', async (req, res) => {
       });
 
       if (type === 'slides') {
-        return res.json({ slides });
+        res.json({ slides });
+        return;
       }
     }
 
@@ -311,7 +319,7 @@ router.post('/:id/regenerate', async (req, res) => {
 });
 
 // POST /api/drafts/:id/slides/:pos/reprompt - Reprompt specific slide
-router.post('/:id/slides/:position/reprompt', async (req, res) => {
+router.post('/:id/slides/:position/reprompt', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id, position } = req.params;
     const pos = parseInt(position);
@@ -322,7 +330,8 @@ router.post('/:id/slides/:position/reprompt', async (req, res) => {
     });
 
     if (!draft) {
-      return res.status(404).json({ error: 'Draft not found' });
+      res.status(404).json({ error: 'Draft not found' });
+      return;
     }
 
     const slide = await prisma.slide.findUnique({
@@ -335,7 +344,8 @@ router.post('/:id/slides/:position/reprompt', async (req, res) => {
     });
 
     if (!slide) {
-      return res.status(404).json({ error: 'Slide not found' });
+      res.status(404).json({ error: 'Slide not found' });
+      return;
     }
 
     const settings = await prisma.settings.findUnique({
@@ -366,13 +376,14 @@ router.post('/:id/slides/:position/reprompt', async (req, res) => {
 });
 
 // PATCH /api/drafts/:id/slides/:pos - Update specific slide
-router.patch('/:id/slides/:position', async (req, res) => {
+router.patch('/:id/slides/:position', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id, position } = req.params;
     const { copy } = req.body;
 
     if (!copy) {
-      return res.status(400).json({ error: 'copy is required' });
+      res.status(400).json({ error: 'copy is required' });
+      return;
     }
 
     const slide = await prisma.slide.update({
@@ -393,7 +404,7 @@ router.patch('/:id/slides/:position', async (req, res) => {
 });
 
 // DELETE /api/drafts/:id - Delete draft
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 

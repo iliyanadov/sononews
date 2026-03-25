@@ -50,14 +50,6 @@ interface TwitterAPITweet {
   };
 }
 
-interface TwitterAPIResponse {
-  tweets: TwitterAPITweet[];
-  has_next_page: boolean;
-  next_cursor: string;
-  status: string;
-  message: string;
-}
-
 // Mock data matching Twitter API format
 function createMockTweet(id: string, text: string, postedAt: Date, mediaCount: number = 0): TwitterAPITweet {
   const hoursSincePost = (Date.now() - postedAt.getTime()) / (1000 * 60 * 60);

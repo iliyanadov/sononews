@@ -29,16 +29,21 @@ router.get('/', async (req, res) => {
     });
 
     res.json({
-      alerts: posts.map((post) => ({
-        id: post.id,
-        text: post.text,
-        mediaUrls: post.mediaUrls,
-        postedAt: post.postedAt,
-        likeCount: post.likeSnapshots?.[post.likeSnapshots.length - 1]?.count || 0,
-        currentLph: post.currentLph,
-        status: post.status,
-        alertFired: post.alertFired,
-      })),
+      alerts: posts.map((post) => {
+        const lastSnapshot = Array.isArray(post.likeSnapshots)
+          ? post.likeSnapshots[post.likeSnapshots.length - 1]
+          : null;
+        return {
+          id: post.id,
+          text: post.text,
+          mediaUrls: post.mediaUrls,
+          postedAt: post.postedAt,
+          likeCount: (lastSnapshot as any)?.count || 0,
+          currentLph: post.currentLph,
+          status: post.status,
+          alertFired: post.alertFired,
+        };
+      }),
       total: posts.length,
     });
   } catch (error) {
@@ -81,7 +86,7 @@ router.post('/:id/dismiss', async (req, res) => {
  * POST /api/alerts/:id/create-draft
  * Create a draft from an alert post
  */
-router.post('/:id/create-draft', async (req, res) => {
+router.post('/:id/create-draft', async (req, res): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -91,9 +96,10 @@ router.post('/:id/create-draft', async (req, res) => {
     });
 
     if (!post) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Post not found',
       });
+      return;
     }
 
     // Create draft

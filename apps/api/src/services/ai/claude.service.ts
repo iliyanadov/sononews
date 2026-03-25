@@ -8,10 +8,7 @@ const anthropic = new Anthropic({
 
 const MODEL = process.env.NODE_ENV === 'production'
   ? 'claude-haiku-4-5-20251001'
-  : 'gemini-2.5-flash';
-
-// For development with Gemini (if we switch)
-const USE_GEMINI = process.env.NODE_ENV !== 'production' && process.env.AI_MODEL_DEV === 'gemini-2.5-flash';
+  : 'claude-sonnet-4-6'; // Using Sonnet for dev since we're using Anthropic SDK
 
 interface GenerateContentOptions {
   tweetText: string;

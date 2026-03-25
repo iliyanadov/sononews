@@ -8,7 +8,7 @@ export class TwitterAPIIoAdapter implements XScraperAdapter {
     this.apiKey = apiKey;
   }
 
-  async fetchUserTimeline(username: string, sinceId?: string): Promise<ScrapedPost[]> {
+  async fetchUserTimeline(username: string, _sinceId?: string): Promise<ScrapedPost[]> {
     console.log(`[TwitterAPI] Fetching timeline for @${username}`);
 
     // Step 1: Get user info to convert username to userId
