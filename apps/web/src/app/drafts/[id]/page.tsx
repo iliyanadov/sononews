@@ -328,8 +328,27 @@ export default function DraftEditorPage() {
             <Button asChild variant="outline">
               <Link href="/drafts">← Back</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="/alerts">View Alerts</Link>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:3001/api/export/${id}`);
+                  const data = await response.json();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${data.headline.slice(0, 30).replace(/[^a-z0-9]/gi, '_')}_carousel.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showNotification('success', 'Draft exported!');
+                } catch (error) {
+                  console.error('Export failed:', error);
+                  showNotification('error', 'Failed to export draft');
+                }
+              }}
+            >
+              📥 Export JSON
             </Button>
           </div>
         </div>
