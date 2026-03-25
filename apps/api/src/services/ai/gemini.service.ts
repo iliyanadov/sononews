@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const MODEL = 'gemini-2.0-flash-exp'; // Free tier model
+const MODEL = 'gemini-2.0-flash'; // Free tier model
 
 interface GenerateContentOptions {
   tweetText: string;
