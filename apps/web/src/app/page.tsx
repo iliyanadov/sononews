@@ -94,6 +94,20 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
+          {/* Navigation */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild variant="default" className="flex-1">
+                  <a href="/alerts">View Alerts</a>
+                </Button>
+                <Button asChild variant="outline" className="flex-1" disabled>
+                  <a href="#">Editor (Coming Soon)</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Features */}
           <div className="grid md:grid-cols-3 gap-6">
             <Card>
