@@ -189,6 +189,22 @@ export default function AlertsPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {alert.mediaUrls.length > 0 && (
+                  <div className="mb-4 flex gap-2">
+                    {alert.mediaUrls.slice(0, 3).map((url, idx) => (
+                      <div key={idx} className="relative w-20 h-20 bg-muted rounded overflow-hidden">
+                        <img
+                          src={url}
+                          alt={`Media ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/80';
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p className="text-sm mb-4 line-clamp-3">{alert.text}</p>
                 <div className="flex items-center space-x-2">
                   {alert.status !== 'DISMISSED' && (
