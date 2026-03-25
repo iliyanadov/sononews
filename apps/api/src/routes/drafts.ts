@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { prisma } from '@/lib/prisma';
-import { claudeService } from '@/services/ai';
+import { aiService } from '@/services/ai';
 import { PostStatus, AiGeneratedContent } from '@sononews/shared';
 
 const router = express.Router();
@@ -44,7 +44,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
 
     // Trigger AI content generation (fire and forget for now)
-    claudeService
+    aiService
       .generateContent({
         tweetText: sourcePost.text,
         brandVoice: settings?.brandVoice || undefined,

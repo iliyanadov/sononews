@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { claudeService } from '../services/ai';
+import { aiService } from '../services/ai';
 
 const router = Router();
 
@@ -121,7 +121,7 @@ router.post('/:id/create-draft', async (req, res): Promise<void> => {
     });
 
     // Trigger AI content generation (fire and forget)
-    claudeService
+    aiService
       .generateContent({
         tweetText: post.text,
         brandVoice: settings?.brandVoice || undefined,
