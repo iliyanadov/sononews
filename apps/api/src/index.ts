@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import healthRouter from './routes/health';
 import jobsRouter from './routes/jobs';
 import alertsRouter from './routes/alerts';
+import draftsRouter from './routes/drafts';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 
@@ -21,6 +22,7 @@ app.use(requestLogger);
 app.use('/api/health', healthRouter);
 app.use('/api/jobs', jobsRouter);
 app.use('/api/alerts', alertsRouter);
+app.use('/api/drafts', draftsRouter);
 
 // Error handling (must be last)
 app.use(errorHandler);
