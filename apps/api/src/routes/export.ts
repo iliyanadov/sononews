@@ -54,7 +54,7 @@ router.get('/:draftId', async (req: Request, res: Response): Promise<void> => {
         text: draft.sourcePost.text,
         postedAt: draft.sourcePost.postedAt.toISOString(),
       },
-      slides: draft.slides.map((slide) => ({
+      slides: draft.slides.map((slide: { position: number; copy: string }) => ({
         position: slide.position,
         copy: slide.copy,
       })),
@@ -99,7 +99,7 @@ router.get('/:draftId/download', async (req: Request, res: Response): Promise<vo
         text: draft.sourcePost.text,
         postedAt: draft.sourcePost.postedAt.toISOString(),
       },
-      slides: draft.slides.map((slide) => ({
+      slides: draft.slides.map((slide: { position: number; copy: string }) => ({
         position: slide.position,
         copy: slide.copy,
       })),

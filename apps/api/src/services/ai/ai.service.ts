@@ -75,11 +75,11 @@ class AIService implements IAIService {
   /**
    * Check if an error indicates we should try the fallback provider
    */
-  private shouldFallback(error: any): boolean {
+  private shouldFallback(error: unknown): boolean {
     if (!error) return false;
 
-    const errorMessage = error.message || String(error);
-    const errorCode = error.status || error.statusCode;
+    const errorMessage = (error as Error).message || String(error);
+    const errorCode = (error as { status?: number; statusCode?: number }).status || (error as { status?: number; statusCode?: number }).statusCode;
 
     // Fallback on quota exceeded, rate limits, or service unavailable
     const fallbackPatterns = [
@@ -126,7 +126,7 @@ class AIService implements IAIService {
    */
   private async executeWithFallback<T>(
     operation: string,
-    options: any,
+    _options: Record<string, unknown>,
     primaryFn: () => Promise<T>,
     fallbackFn: () => Promise<T>
   ): Promise<T> {
@@ -144,7 +144,7 @@ class AIService implements IAIService {
         if (this.shouldFallback(error)) {
           console.log(
             `[AIService] ${operation} failed with ${this.primaryProviderName}:`,
-            error.message || String(error)
+            (error as Error).message || String(error)
           );
           console.log(`[AIService] Falling back to ${this.fallbackProviderName}...`);
           this.recordFailure(this.primaryProviderName);
@@ -167,7 +167,7 @@ class AIService implements IAIService {
     } catch (fallbackError) {
       console.error(
         `[AIService] ${operation} also failed with ${this.fallbackProviderName}:`,
-        fallbackError.message || String(fallbackError)
+        (fallbackError as Error).message || String(fallbackError)
       );
       this.recordFailure(this.fallbackProviderName);
       throw fallbackError;

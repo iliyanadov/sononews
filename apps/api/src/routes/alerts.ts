@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     });
 
     res.json({
-      alerts: posts.map((post) => {
+      alerts: posts.map((post: { id: string; text: string; mediaUrls: string[]; postedAt: Date; likeSnapshots: any[]; currentLph: number; status: string; alertFired: boolean }) => {
         const lastSnapshot = Array.isArray(post.likeSnapshots)
           ? post.likeSnapshots[post.likeSnapshots.length - 1]
           : null;
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
           text: post.text,
           mediaUrls: post.mediaUrls,
           postedAt: post.postedAt,
-          likeCount: (lastSnapshot as any)?.count || 0,
+          likeCount: (lastSnapshot as { count?: number })?.count || 0,
           currentLph: post.currentLph,
           status: post.status,
           alertFired: post.alertFired,

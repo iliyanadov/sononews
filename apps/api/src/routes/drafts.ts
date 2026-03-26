@@ -120,7 +120,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
       headline: draft.headline,
       subCaption: draft.subCaption,
       thumbnailUrl: draft.thumbnailUrl,
-      slides: draft.slides.map((slide) => ({
+      slides: draft.slides.map((slide: { id: string; position: number; copy: string; isAiGenerated: boolean }) => ({
         id: slide.id,
         position: slide.position,
         copy: slide.copy,
@@ -167,7 +167,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const total = await prisma.carouselDraft.count();
 
     res.json({
-      drafts: drafts.map((draft) => ({
+      drafts: drafts.map((draft: { id: string; sourcePostId: string; sourcePost: any; headline: string | null; subCaption: string | null; slides: any[]; thumbnailUrl: string | null; createdAt: Date; updatedAt: Date }) => ({
         id: draft.id,
         sourcePostId: draft.sourcePostId,
         sourcePost: draft.sourcePost,
@@ -430,8 +430,8 @@ router.delete('/:id/slides/:position', async (req: Request, res: Response): Prom
 
     // Reorder remaining slides
     const updatePromises = allSlides
-      .filter(s => s.position > posToDelete)
-      .map(slide =>
+      .filter((s: { position: number }) => s.position > posToDelete)
+      .map((slide: { id: string; position: number }) =>
         prisma.slide.update({
           where: { id: slide.id },
           data: { position: slide.position - 1 },
