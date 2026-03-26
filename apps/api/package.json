@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "worker": "tsx watch src/worker/index.ts",
-    "build": "npm run build --workspace=@sononews/shared && tsc",
+    "build": "npm run build --workspace=@sononews/shared && npx prisma generate && tsc",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
