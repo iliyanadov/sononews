@@ -1,8 +1,7 @@
 # SonoNews Production Deployment Guide
 
 This guide covers deploying SonoNews to production using:
-- **Railway** - API backend
-- **Vercel** - Web frontend
+- **Railway** - API backend and Web frontend (unified deployment)
 - **Neon** - PostgreSQL database
 - **Upstash** - Redis for BullMQ
 
@@ -12,12 +11,11 @@ This guide covers deploying SonoNews to production using:
 
 1. GitHub repository: https://github.com/iliyanadov/sononews.git
 2. Railway account (free tier available)
-3. Vercel account (free tier available)
-4. Neon account (free tier available)
-5. Upstash account (free tier available)
-6. TwitterAPI.io account (for Twitter scraping)
-7. Anthropic account (for Claude AI)
-8. Google Cloud account (for Gemini AI - optional)
+3. Neon account (free tier available)
+4. Upstash account (free tier available)
+5. TwitterAPI.io account (for Twitter scraping)
+6. Anthropic account (for Claude AI)
+7. Google Cloud account (for Gemini AI - optional)
 
 ---
 
@@ -53,12 +51,21 @@ REDIS_URL=rediss://default:your-password@your-redis.upstash.io:6379
 
 ---
 
-### 3. Set Up Railway (API Backend)
+### 3. Set Up Railway (API + Web)
+
+Railway will host both services in a single project.
+
+#### 3.1 Create Railway Project
 
 1. Go to [Railway](https://railway.app/)
 2. Click "New Project" → "Deploy from GitHub repo"
 3. Select `iliyanadov/sononews`
-4. Configure settings:
+
+#### 3.2 Add API Service
+
+1. Click "New Service" → "Deploy from GitHub repo"
+2. Select the same repository
+3. Configure settings:
 
 **Root Directory:** `apps/api`
 
@@ -81,52 +88,79 @@ TWITTER_SOURCE_ACCOUNT=Kurrco
 
 # App Settings
 NODE_ENV=production
-FRONTEND_URL=https://sononews.vercel.app
+PORT=3001
+FRONTEND_URL=https://your-web-service.up.railway.app
 USE_MOCK_SCRAPER=false
 ```
 
-5. Click **Deploy**
+4. Click **Deploy**
+5. Note your API service URL: `https://your-api-service.up.railway.app`
 
-6. **Post-Deploy:**
-   - Railway will detect the Dockerfile
-   - Build will take 2-3 minutes
-   - Get your API URL: `https://your-app.up.railway.app`
-   - Run migrations: Railway → Project → Metrics → "Execute Command"
-     ```
-     npx prisma migrate deploy
-     ```
+#### 3.3 Add Web Service
 
----
+1. Click "New Service" → "Deploy from GitHub repo"
+2. Select the same repository
+3. Configure settings:
 
-### 4. Set Up Vercel (Web Frontend)
-
-1. Go to [Vercel](https://vercel.com/)
-2. Click "Add New" → "Project"
-3. Import `iliyanadov/sononews` from GitHub
-
-**Build Settings:**
-```
-Framework Preset: Next.js
-Root Directory: (leave empty)
-Build Command: cd apps/web && npm run build
-Output Directory: apps/web/.next
-Install Command: npm install
-```
+**Root Directory:** `apps/web`
 
 **Environment Variables:**
 ```bash
-NEXT_PUBLIC_API_URL=https://your-railway-app.up.railway.app
+# Points to the API service
+NEXT_PUBLIC_API_URL=https://your-api-service.up.railway.app
 ```
 
 4. Click **Deploy**
+5. Note your web service URL: `https://your-web-service.up.railway.app`
 
-5. Your frontend will be available at: `https://sononews.vercel.app`
+#### 3.4 Update Service URLs (Cross-Referencing)
+
+After both services are deployed:
+
+1. Go to **API Service** → Settings → Environment Variables
+2. Update `FRONTEND_URL` to point to your web service:
+   ```
+   FRONTEND_URL=https://your-web-service.up.railway.app
+   ```
+3. Go to **Web Service** → Settings → Environment Variables
+4. Update `NEXT_PUBLIC_API_URL` to point to your API service:
+   ```
+   NEXT_PUBLIC_API_URL=https://your-api-service.up.railway.app
+   ```
+
+#### 3.5 Run Database Migrations
+
+1. Go to **API Service** → Metrics
+2. Click "Execute Command"
+3. Run:
+   ```
+   npx prisma migrate deploy
+   ```
 
 ---
 
 ## 🔧 Configuration Details
 
-### Railway Docker Configuration
+### Railway Multi-Service Setup
+
+**API Service** (`apps/api`):
+- Uses `apps/api/Dockerfile`
+- Runs on port 3001
+- Provides REST API endpoints
+- Connects to Neon and Upstash
+
+**Web Service** (`apps/web`):
+- Uses `apps/web/Dockerfile`
+- Runs on port 3000
+- Provides Next.js frontend
+- Connects to API service
+
+**Service Discovery:**
+- Each service knows about the other via environment variables
+- API service knows web service URL (`FRONTEND_URL`)
+- Web service knows API service URL (`NEXT_PUBLIC_API_URL`)
+
+### API Docker Configuration
 
 The `apps/api/Dockerfile` handles:
 - Node.js 20 Alpine base image
@@ -134,16 +168,15 @@ The `apps/api/Dockerfile` handles:
 - Prisma client generation
 - TypeScript compilation
 - Production-optimized runtime
+- Railway sets `PORT` environment variable dynamically
 
-Railway automatically sets the `PORT` environment variable.
+### Web Docker Configuration
 
-### Vercel Next.js Configuration
-
-The `vercel.json` at repo root ensures:
-- Correct build command for monorepo
-- Output directory points to `apps/web/.next`
-- Framework detection: Next.js
-- Standalone output mode (optimized)
+The `apps/web/Dockerfile` handles:
+- Node.js 20 Alpine base image
+- Next.js standalone build (already configured)
+- Optimized production bundle
+- Railway sets `PORT` environment variable dynamically
 
 ### Neon Database Connection
 
@@ -172,7 +205,7 @@ After deployment, verify:
 
 ### API Health Check
 ```bash
-curl https://your-app.up.railway.app/api/health
+curl https://your-api-service.up.railway.app/api/health
 ```
 Should return:
 ```json
@@ -184,8 +217,8 @@ Should return:
 }
 ```
 
-### Frontend Access
-1. Open `https://sononews.vercel.app`
+### Web Service Access
+1. Open `https://your-web-service.up.railway.app`
 2. Navigate to `/alerts`
 3. Should load alert list (or show empty if mock disabled)
 
@@ -193,6 +226,12 @@ Should return:
 1. Click "Create Draft" on any alert
 2. Wait 10-15 seconds
 3. Should redirect to draft editor with AI-generated content
+
+### Cross-Service Communication
+1. Open browser DevTools Network tab
+2. Navigate to `/alerts`
+3. Verify API calls go to `NEXT_PUBLIC_API_URL`
+4. Check CORS headers include correct origin
 
 ---
 
@@ -213,6 +252,11 @@ app.use(cors({
 }));
 ```
 
+### Service URLs
+- Both services use Railway's public URLs
+- Each service trusts the other via CORS
+- Update environment variables when redeploying
+
 ### Database Access
 - Neon provides pooled connections for better performance
 - Direct URL used only for migrations
@@ -222,15 +266,16 @@ app.use(cors({
 
 ## 📊 Monitoring
 
-### Railway (API)
-- View logs in Railway dashboard
-- Monitor CPU/memory usage
+### Railway Dashboard
+- View logs for both services
+- Monitor CPU/memory usage per service
 - Check deployment status
+- Track response times
 
-### Vercel (Frontend)
-- View builds in Vercel dashboard
-- Analytics available
-- Deployment logs accessible
+### Service Health
+- API service: `/api/health` endpoint
+- Web service: Railway health checks
+- Both services have automatic restarts
 
 ### Neon (Database)
 - Monitor connection pool usage
@@ -247,66 +292,76 @@ app.use(cors({
 ## 🐛 Troubleshooting
 
 ### API Returns 404/500
-- Check Railway logs for errors
+- Check API service logs in Railway dashboard
 - Verify all env vars are set
 - Ensure DATABASE_URL and DIRECT_DATABASE_URL are both set
+- Check that migrations ran successfully
 
-### Frontend Can't Connect to API
-- Verify NEXT_PUBLIC_API_URL is set in Vercel
-- Check FRONTEND_URL matches your Vercel domain
+### Web Can't Connect to API
+- Verify NEXT_PUBLIC_API_URL is set in web service
+- Check FRONTEND_URL matches web service URL in API service
 - Ensure CORS is configured correctly
+- Check browser console for CORS errors
 
 ### Database Connection Errors
 - Verify DATABASE_URL format (should have `-pooler`)
 - Verify DIRECT_DATABASE_URL format (should NOT have `-pooler`)
 - Check Neon console for connection issues
+- Ensure migrations were deployed
 
 ### Redis Connection Errors
 - Verify REDIS_URL uses `rediss://` (double 's')
 - Check Upstash console for database status
 - Ensure TLS is enabled in connection config
 
+### Service URL Issues
+- Ensure both services are deployed and running
+- Check environment variables reference correct service URLs
+- Wait for Railway to assign public URLs
+- Redeploy service if URL changed
+
 ### AI Generation Fails
 - Verify ANTHROPIC_API_KEY is valid
 - Check API key has credits/usage available
-- Review logs for specific error messages
+- Review API service logs for specific error messages
 
 ---
 
 ## 🔄 Continuous Deployment
 
-Both Railway and Vercel are configured for automatic deployments:
+Railway is configured for automatic deployments:
+- **Push to `main`** → Automatic deployment of both services
+- **Pull requests** → Can set up preview deployments
+- **Rollbacks** → One-click revert in Railway dashboard
 
-- **Push to `main`** → Automatic deployment
-- **Pull requests** → Preview deployments (Vercel)
-- **Rollbacks** → One-click revert in dashboards
+**Note:** When pushing to main, both services will redeploy automatically. Update environment variables accordingly if service URLs change.
 
 ---
 
 ## 📝 Post-Deployment Setup
 
-1. **Update DNS:** Point custom domain to Vercel (optional)
+1. **Update Service URLs:** Cross-reference FRONTEND_URL and NEXT_PUBLIC_API_URL
 2. **Configure Twitter API:** Add real Twitter API credentials
-3. **Set Monitoring:** Configure alerts for API/database
+3. **Set Monitoring:** Configure alerts for both services
 4. **Brand Voice:** Configure default brand voice in Settings
 5. **Test Flow:** Create test draft from alert
+6. **Custom Domain:** Add custom domains in Railway (optional)
 
 ---
 
 ## 🆘 Support
 
 For issues:
-- Check logs in Railway/Vercel dashboards
+- Check logs in Railway dashboard for both services
 - Review this deployment guide
 - Check Neon/Upstash status pages
 - Open issue on GitHub
 
 ---
 
-**Deployment Status:** Codebase prepared ✅
+**Deployment Status:** Ready for Railway ✅
 
-Ready to deploy to:
-- Railway (API)
-- Vercel (Web)
-- Neon (Database)
-- Upstash (Redis)
+**Architecture:**
+- Railway Service 1: API (`apps/api`)
+- Railway Service 2: Web (`apps/web`)
+- External: Neon (Database), Upstash (Redis)
