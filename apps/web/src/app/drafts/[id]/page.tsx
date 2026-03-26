@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageSearch } from '@/components/ImageSearch';
 import { SlidePreview, ExtensionSlidePreview } from '@/components/SlidePreview';
-import { createHistory } from '@/lib/undo';
 
 interface SourcePost {
   id: string;
@@ -367,7 +366,7 @@ export default function DraftEditorPage() {
     }
   }
 
-  async function removeSlide(slideId: string, position: number) {
+  async function removeSlide(_slideId: string, position: number) {
     setSaving(true);
     try {
       const response = await fetch(
