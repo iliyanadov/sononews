@@ -43,7 +43,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Prisma
-apps/api/prisma/migrations/**/migration.sql
+# Don't ignore migration.sql - we need these in git for production deployments
 !apps/api/prisma/migrations/**/migration.sql.backup
 
 # IDE
